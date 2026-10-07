@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Modèle OSI</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#0f172a;
+color:white;
+line-height:1.7;
+scroll-behavior:smooth;
+}
+
+header{
+position:fixed;
+top:0;
+width:100%;
+background:#020617;
+padding:15px;
+z-index:1000;
+text-align:center;
+font-size:22px;
+}
+
+section{
+padding:120px 10%;
+}
+
+h2{
+text-align:center;
+margin-bottom:30px;
+color:#38bdf8;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+margin-bottom:25px;
+border-radius:10px;
+opacity:0;
+transform:translateY(40px);
+transition:0.6s;
+}
+
+.card.show{
+opacity:1;
+transform:translateY(0);
+}
+
+.card:hover{
+transform:scale(1.03);
+background:#334155;
+}
+
+.layer{
+margin:10px 0;
+padding:15px;
+border-radius:8px;
+}
+
+.l7{background:#dc2626;}
+.l6{background:#ea580c;}
+.l5{background:#facc15;}
+.l4{background:#22c55e;}
+.l3{background:#3b82f6;}
+.l2{background:#8b5cf6;}
+.l1{background:#64748b;}
+
+button{
+padding:10px 15px;
+background:#38bdf8;
+border:none;
+cursor:pointer;
+margin-top:10px;
+}
+
+@keyframes fade{
+from{opacity:0}
+to{opacity:1}
+}
+
+footer{
+text-align:center;
+padding:20px;
+background:#020617;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+Modèle OSI - Réseau Informatique
+</header>
+
+<section>
+
+<h2>Introduction</h2>
+
+<div class="card">
+<p>
+Le modèle OSI (Open Systems Interconnection) est un modèle qui décrit
+le fonctionnement d’un réseau en 7 couches.
+Chaque couche a un rôle spécifique.
+</p>
+</div>
+
+</section>
+
+<section>
+
+<h2>Les 7 couches du modèle OSI</h2>
+
+<div class="card layer l7">
+<h3>7 - Application</h3>
+<p>Interface avec l’utilisateur (HTTP, FTP).</p>
+</div>
+
+<div class="card layer l6">
+<h3>6 - Présentation</h3>
+<p>Chiffrement et format des données.</p>
+</div>
+
+<div class="card layer l5">
+<h3>5 - Session</h3>
+<p>Gestion des sessions entre applications.</p>
+</div>
+
+<div class="card layer l4">
+<h3>4 - Transport</h3>
+<p>Transmission fiable (TCP, UDP).</p>
+</div>
+
+<div class="card layer l3">
+<h3>3 - Réseau</h3>
+<p>Routage et adressage IP.</p>
+</div>
+
+<div class="card layer l2">
+<h3>2 - Liaison de données</h3>
+<p>MAC Address, Switch.</p>
+</div>
+
+<div class="card layer l1">
+<h3>1 - Physique</h3>
+<p>Transmission des bits (câbles, signaux).</p>
+</div>
+
+</section>
+
+<section>
+
+<h2>Simulation</h2>
+
+<div class="card">
+
+<p>Appuie sur le bouton pour voir le passage des données dans les couches :</p>
+
+<button onclick="start()">Démarrer</button>
+
+<p id="result"></p>
+
+</div>
+
+</section>
+
+<footer>
+Projet Réseau - OSI Model
+</footer>
+
+<script>
+
+const layers=[
+"Application",
+"Présentation",
+"Session",
+"Transport",
+"Réseau",
+"Liaison de données",
+"Physique"
+];
+
+function start(){
+
+let i=0;
+let result=document.getElementById("result");
+result.innerHTML="";
+
+let interval=setInterval(()=>{
+
+if(i<layers.length){
+result.innerHTML+="➡ " + layers[i] + "<br>";
+i++;
+}else{
+clearInterval(interval);
+}
+
+},800);
+
+}
+
+// animation scroll
+const cards=document.querySelectorAll(".card");
+
+window.addEventListener("scroll",()=>{
+
+const trigger=window.innerHeight*0.85;
+
+cards.forEach(card=>{
+
+const top=card.getBoundingClientRect().top;
+
+if(top<trigger){
+card.classList.add("show");
+}
+
+});
+
+});
+
+</script>
+
+</body>
+</html>

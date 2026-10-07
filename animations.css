@@ -1,0 +1,173 @@
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Network Cards Animation */
+.network-card {
+    opacity: 0;
+    animation: fadeIn 0.6s ease forwards;
+}
+
+.network-card:nth-child(1) { animation-delay: 0.1s; }
+.network-card:nth-child(2) { animation-delay: 0.2s; }
+.network-card:nth-child(3) { animation-delay: 0.3s; }
+.network-card:nth-child(4) { animation-delay: 0.4s; }
+.network-card:nth-child(5) { animation-delay: 0.5s; }
+.network-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Protocol Icons Hover Animation */
+.protocol-icon {
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.protocol:hover .protocol-icon {
+    animation: float 2s ease-in-out infinite;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+}
+
+/* Read More Button Animation */
+.read-more {
+    position: relative;
+    overflow: hidden;
+}
+
+.read-more::after {
+    content: '→';
+    position: absolute;
+    right: -20px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.read-more:hover::after {
+    right: 10px;
+    opacity: 1;
+}
+
+/* Theme Toggle Animation */
+.theme-icon {
+    transition: transform 0.3s ease;
+}
+
+#theme-toggle:hover .theme-icon {
+    transform: rotate(30deg);
+}
+
+/* Background Animation */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(41, 128, 185, 0.1) 0%, transparent 25%),
+        radial-gradient(circle at 80% 70%, rgba(231, 76, 60, 0.1) 0%, transparent 25%),
+        radial-gradient(circle at 50% 80%, rgba(46, 204, 113, 0.1) 0%, transparent 25%);
+    z-index: -1;
+    animation: backgroundMove 15s ease infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes backgroundMove {
+    0% {
+        transform: translate(0, 0);
+    }
+    25% {
+        transform: translate(-5%, 5%);
+    }
+    50% {
+        transform: translate(5%, -5%);
+    }
+    75% {
+        transform: translate(-5%, -5%);
+    }
+    100% {
+        transform: translate(5%, 5%);
+    }
+}
+
+/* Scroll Reveal Animation */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Network Type Specific Animations */
+[data-type="lan"] .card-image img {
+    animation: networkPulse 4s ease-in-out infinite;
+}
+
+[data-type="wan"] .card-image img {
+    animation: float 3s ease-in-out infinite;
+}
+
+[data-type="man"] .card-image img {
+    animation: slideIn 1s ease-out;
+}
+
+[data-type="pan"] .card-image img {
+    animation: pulse 2s infinite;
+}
+
+[data-type="wlan"] .card-image img {
+    animation: wifiPulse 3s ease-in-out infinite;
+}
+
+[data-type="vpn"] .card-image img {
+    animation: lockPulse 3s ease-in-out infinite;
+}
+
+@keyframes networkPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+@keyframes wifiPulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes lockPulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .network-card {
+        animation: none;
+        opacity: 1;
+    }
+    
+    body::before {
+        animation: none;
+    }
+}

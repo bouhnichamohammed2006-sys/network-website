@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réseaux informatiques</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(135deg,#032198,#0351b0,#0094bd);
+    color:white;
+    scroll-behavior:smooth;
+}
+
+header{
+    text-align:center;
+    padding:60px 20px;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+h1{
+    font-size:40px;
+}
+
+.container{
+    width:90%;
+    max-width:1100px;
+    margin:auto;
+}
+
+.card{
+    background:rgba(38, 241, 72, 0.08);
+    backdrop-filter: blur(10px);
+    padding:20px;
+    margin:20px 0;
+    border-radius:15px;
+    transition:0.4s;
+    transform:translateY(40px);
+    opacity:0;
+}
+
+.card.show{
+    transform:translateY(0);
+    opacity:1;
+}
+
+.card:hover{
+    transform:scale(1.03);
+    background:rgba(255,255,255,0.15);
+}
+
+h2{
+    color:#179adc;
+}
+
+ul{
+    padding-left:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:40px;
+    background:white;
+    color:black;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+th,td{
+    padding:12px;
+    text-align:center;
+}
+
+th{
+    background:#0c6cba;
+    color:white;
+}
+
+tr:nth-child(even){
+    background:#f2f2f2;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    margin-top:40px;
+    background:#111;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(-20px);}
+    to{opacity:1; transform:translateY(0);}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Sécurité Réseau</h1>
+    <p>Site éducatif interactif avec animations</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>🔐 ACL (Access Control List)</h2>
+<ul>
+    <li>Liste de règles pour autoriser ou bloquer le trafic :</li>
+<li>IP source</li>
+<li>IP destination</li>
+<li>Protocole (TCP/UDP/ICMP)</li>
+<li>Numéro de port</li>
+<li><strong>Utilisation : </strong> contrôler l’accès et renforcer la sécurité</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🔥 Firewall</h2>
+<ul>
+<li>Analyse le trafic entrant/sortant</li>
+<li>Autorise ou bloque selon règles</li>
+<li>Types : Hardware / Software</li>
+
+</ul>
+</div>
+
+<div class="card">
+<h2>🌍 NAT</h2>
+<ul>
+<li>Traduction IP privée → IP publique</li>
+<li>Types : Static, Dynamic, PAT</li>
+<li>Exemple : 192.168.1.10 → 105.50.60.2</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🔒 VPN</h2>
+<ul>
+<li>Tunnel sécurisé et chiffré</li>
+<li>Usage : travail à distance, protection données, connexion site-to-site</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🖥 SSH</h2>
+<ul>
+<li>Accès distant sécurisé</li>
+<li>Port 22</li>
+<li>Communication chiffrée</li>
+<li>Remplace Telnet</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🔌 Port Security</h2>
+<ul>
+<li>Limite appareils sur un port switch</li>
+<li>Modes : Protect, Restrict, Shutdown</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🚨 IDS / IPS
+</h2>
+<ul>
+<li>IDS : détecte et alerte</li>
+<li>IPS : détecte et bloque</li>
+<li>Différence : IDS = détecte, IPS = détecte + bloque</li>
+</ul>
+</div>
+
+<div class="card">
+
+<h2 style="text-align:center;margin-top:50px;">Résumé rapide</h2>
+
+<table>
+<thead>
+<tr><th>Technologie</th><th>Fonction</th></tr>
+</thead>
+<tbody>
+<tr><td>ACL</td><td>Filtrer le trafic</td></tr>
+<tr><td>Firewall</td><td>Protéger le réseau</td></tr>
+<tr><td>NAT</td><td>Traduction d’adresse IP</td></tr>
+<tr><td>VPN</td><td>Connexion sécurisée</td></tr>
+<tr><td>SSH</td><td>Accès distant sécurisé</td></tr>
+<tr><td>Port Security</td><td>Sécuriser les ports du switch</td></tr>
+<tr><td>IDS</td><td>Détection d’intrusion</td></tr>
+<tr><td>IPS</td><td>Prévention d’intrusion</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<footer>
+© 2026 - Site Réseau Animé
+</footer>
+
+<script>
+const cards = document.querySelectorAll('.card');
+
+window.addEventListener('scroll', () => {
+    cards.forEach(card => {
+        const position = card.getBoundingClientRect().top;
+        const screenHeight = window.innerHeight;
+        if(position < screenHeight - 100){
+            card.classList.add('show');
+        }
+    });
+});
+</script>
+
+</body>
+</html>

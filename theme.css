@@ -1,0 +1,222 @@
+/* Network Cards */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.network-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.network-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow-color);
+}
+
+.card-image {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+}
+
+[data-theme="dark"] .card-image {
+    background: linear-gradient(135deg, #1010db 0%, #1f51da 100%);
+}
+
+.card-image img {
+    max-height: 100%;
+    width: auto;
+    object-fit: contain;
+}
+
+.network-card h3 {
+    padding: 1.25rem 1.5rem 0.5rem;
+    color: var(--primary-color);
+    font-size: 1.4rem;
+}
+
+.network-card p {
+    padding: 0 1.5rem 1.5rem;
+    color: var(--text-color);
+    opacity: 0.9;
+    flex-grow: 1;
+}
+
+.read-more {
+    display: inline-block;
+    margin: 0 1.5rem 1.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--secondary-color);
+    color: white !important;
+    border-radius: 5px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.read-more:hover {
+    background-color: var(--accent-color);
+    transform: translateX(-5px);
+}
+
+/* Protocols Section */
+.protocols {
+    margin-top: 4rem;
+}
+
+.protocols h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.protocols h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 50%;
+    transform: translateX(50%);
+    width: 100px;
+    height: 3px;
+    background: var(--secondary-color);
+}
+
+.protocols-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.protocol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    transition: var(--transition);
+    min-width: 120px;
+}
+
+.protocol:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow-color);
+}
+
+.protocol-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.protocol:hover .protocol-icon {
+    transform: scale(1.1);
+}
+
+/* Intro Section */
+.intro {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    margin-bottom: 3rem;
+}
+
+.intro h2 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.intro h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--secondary-color);
+}
+
+.intro h3 {
+    color: var(--primary-color);
+    margin: 1.5rem 0 1rem;
+}
+
+.intro ul {
+    padding-right: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.intro li {
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-right: 1.5rem;
+}
+
+.intro li::before {
+    content: '•';
+    color: var(--secondary-color);
+    font-weight: bold;
+    position: absolute;
+    right: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cards-container {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+    }
+    
+    .footer-section {
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 95%;
+    }
+    
+    .network-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .protocols-grid {
+        gap: 1rem;
+    }
+    
+    .protocol {
+        min-width: 100px;
+        padding: 1rem;
+    }
+    
+    .protocol-icon {
+        width: 40px;
+        height: 40px;
+    }
+}

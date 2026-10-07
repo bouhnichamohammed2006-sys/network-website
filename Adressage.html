@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Réseaux informatiques</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+background:#0f172a;
+color:white;
+line-height:1.7;
+scroll-behavior:smooth;
+}
+
+header{
+position:fixed;
+top:0;
+width:100%;
+background:#020617;
+padding:15px;
+z-index:1000;
+}
+
+nav{
+display:flex;
+justify-content:center;
+gap:25px;
+flex-wrap:wrap;
+}
+
+nav a{
+color:white;
+text-decoration:none;
+font-size:16px;
+transition:0.3s;
+}
+
+nav a:hover{
+color:#38bdf8;
+}
+
+.hero{
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+background:linear-gradient(135deg,#020617,#1e293b);
+padding:20px;
+}
+
+.hero h1{
+font-size:48px;
+margin-bottom:20px;
+animation:fade 2s;
+}
+
+section{
+padding:120px 10%;
+}
+
+h2{
+color:#38bdf8;
+text-align:center;
+margin-bottom:30px;
+}
+
+.card{
+background:#1e293b;
+padding:25px;
+margin-bottom:30px;
+border-radius:10px;
+transform:translateY(40px);
+opacity:0;
+transition:0.6s;
+}
+
+.card.show{
+transform:translateY(0);
+opacity:1;
+}
+
+.card:hover{
+transform:scale(1.03);
+background:#334155;
+}
+
+.code{
+background:black;
+padding:10px;
+border-radius:5px;
+margin-top:10px;
+color:#38bdf8;
+font-family:monospace;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+table th,table td{
+border:1px solid #38bdf8;
+padding:10px;
+text-align:center;
+}
+
+footer{
+text-align:center;
+padding:20px;
+background:#020617;
+}
+
+ul{
+margin-left:20px;
+}
+
+@keyframes fade{
+from{opacity:0}
+to{opacity:1}
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<nav>
+<a href="#adressage">Adressage</a>
+<a href="#ip">Adresse IP</a>
+<a href="#subnet">Masque</a>
+<a href="#dns">DNS</a>
+<a href="#switch">Switching</a>
+<a href="#mac">MAC</a>
+<a href="#types">Types</a>
+<a href="#vlan">VLAN</a>
+<a href="#importance">Importance</a>
+</nav>
+</header>
+
+<div class="hero">
+<h1>Adressage & Switching</h1>
+<p>Site éducatif expliquant l'adressage réseau et la commutation</p>
+</div>
+
+<section id="adressage">
+
+<h2>1️⃣ Adressage réseau</h2>
+
+<div class="card">
+<p>
+L'adressage réseau est le système qui attribue une adresse unique à chaque périphérique du réseau.
+</p>
+
+<ul>
+<li>Ordinateur</li>
+<li>Téléphone</li>
+<li>Imprimante</li>
+<li>Serveur</li>
+</ul>
+
+<p>Chaque périphérique doit posséder une adresse IP.</p>
+
+<div class="code">
+192.168.1.10
+</div>
+
+</div>
+
+</section>
+
+<section id="ip">
+
+<h2>2️⃣ Adresse IP</h2>
+
+<div class="card">
+
+<h3>IPv4</h3>
+
+<div class="code">
+192.168.1.1
+</div>
+
+<p>Chaque nombre est compris entre 0 et 255.</p>
+
+<h3>IPv6</h3>
+
+<div class="code">
+2001:0db8:85a3:0000:0000:8a2e:0370:7334
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Composants d'une adresse IP</h3>
+
+<div class="code">
+192.168.1.10
+</div>
+
+<p>Réseau → 192.168.1</p>
+<p>Périphérique → 10</p>
+
+</div>
+
+</section>
+
+<section id="subnet">
+
+<h2>Masque de sous-réseau</h2>
+
+<div class="card">
+
+<div class="code">
+255.255.255.0
+</div>
+
+<p>Permet d’identifier la partie réseau et la partie périphérique.</p>
+
+</div>
+
+<div class="card">
+
+<h3>Passerelle par défaut</h3>
+
+<div class="code">
+192.168.1.1
+</div>
+
+<p>Souvent le routeur.</p>
+
+</div>
+
+</section>
+
+<section id="dns">
+
+<h2>DNS</h2>
+
+<div class="card">
+
+<p>Le DNS transforme un nom de site en adresse IP.</p>
+
+<div class="code">
+www.google.com
+</div>
+
+devient
+
+<div class="code">
+142.250.74.14
+</div>
+
+</div>
+
+</section>
+
+<section id="switch">
+
+<h2>Commutation réseau</h2>
+
+<div class="card">
+
+<p>La commutation permet de transférer les données dans un réseau LAN à l'aide d'un switch.</p>
+
+<h3>Rôle du switch</h3>
+
+<ul>
+<li>Connexion des périphériques</li>
+<li>Envoi des données au bon périphérique</li>
+<li>Réduction de congestion</li>
+<li>Amélioration de la vitesse</li>
+</ul>
+
+</div>
+
+</section>
+
+<section id="mac">
+
+<h2>Adresse MAC</h2>
+
+<div class="card">
+
+<div class="code">
+00:1A:2B:3C:4D:5E
+</div>
+
+<p>Le switch utilise cette adresse pour envoyer les données.</p>
+
+</div>
+
+<div class="card">
+
+<h3>Table MAC</h3>
+
+<table>
+
+<tr>
+<th>Adresse MAC</th>
+<th>Port</th>
+</tr>
+
+<tr>
+<td>00:1A:2B</td>
+<td>1</td>
+</tr>
+
+<tr>
+<td>00:2C:3D</td>
+<td>2</td>
+</tr>
+
+</table>
+
+</div>
+
+</section>
+
+<section id="types">
+
+<h2>Types de commutation</h2>
+
+<div class="card">
+
+<h3>Stockage et retransmission</h3>
+
+<ul>
+<li>Réception complète de la trame</li>
+<li>Vérification des erreurs</li>
+<li>Haute précision</li>
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3>Transmission directe</h3>
+
+<ul>
+<li>Transmission immédiate</li>
+<li>Très rapide</li>
+<li>Peut produire des erreurs</li>
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3>Diffusion</h3>
+
+<p>Envoi d'un message à tous les périphériques.</p>
+
+<p>Exemple : ARP Request</p>
+
+</div>
+
+</section>
+
+<section id="vlan">
+
+<h2>VLAN</h2>
+
+<div class="card">
+
+<ul>
+<li>VLAN 10 → Administration</li>
+<li>VLAN 20 → Étudiants</li>
+</ul>
+
+<p>Avantages :</p>
+
+<ul>
+<li>Sécurité</li>
+<li>Organisation du réseau</li>
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3>Différence Switch / Routeur</h3>
+
+<table>
+
+<tr>
+<th>Commutateur</th>
+<th>Routeur</th>
+</tr>
+
+<tr>
+<td>LAN</td>
+<td>Connecte réseaux</td>
+</tr>
+
+<tr>
+<td>MAC</td>
+<td>IP</td>
+</tr>
+
+<tr>
+<td>Très rapide</td>
+<td>Plus lent</td>
+</tr>
+
+</table>
+
+</div>
+
+</section>
+
+<section id="importance">
+
+<h2>Importance</h2>
+
+<div class="card">
+
+<ul>
+<li>Organisation du réseau</li>
+<li>Identification des périphériques</li>
+<li>Transmission correcte des données</li>
+<li>Amélioration des performances</li>
+</ul>
+
+</div>
+
+</section>
+
+<footer>
+Projet Réseau Informatique
+</footer>
+
+<script>
+
+const cards=document.querySelectorAll(".card");
+
+window.addEventListener("scroll",()=>{
+
+const trigger=window.innerHeight*0.85;
+
+cards.forEach(card=>{
+
+const top=card.getBoundingClientRect().top;
+
+if(top<trigger){
+card.classList.add("show");
+}
+
+});
+
+});
+
+</script>
+
+</body>
+</html>

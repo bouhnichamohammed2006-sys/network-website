@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protocoles Réseau</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(135deg,#032198,#0351b0,#0094bd);
+    color:white;
+    scroll-behavior:smooth;
+}
+
+header{
+    text-align:center;
+    padding:60px 20px;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+h1{
+    font-size:40px;
+}
+
+.container{
+    width:90%;
+    max-width:1100px;
+    margin:auto;
+}
+
+.card{
+    background:rgba(38, 241, 72, 0.08);
+    backdrop-filter: blur(10px);
+    padding:20px;
+    margin:20px 0;
+    border-radius:15px;
+    transition:0.4s;
+    transform:translateY(40px);
+    opacity:0;
+}
+
+.card.show{
+    transform:translateY(0);
+    opacity:1;
+}
+
+.card:hover{
+    transform:scale(1.03);
+    background:rgba(255,255,255,0.15);
+}
+
+h2{
+    color:#179adc;
+}
+
+ul{
+    padding-left:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:40px;
+    background:white;
+    color:black;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+th,td{
+    padding:12px;
+    text-align:center;
+}
+
+th{
+    background:#0c6cba;
+    color:white;
+}
+
+tr:nth-child(even){
+    background:#f2f2f2;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    margin-top:40px;
+    background:#111;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(-20px);}
+    to{opacity:1; transform:translateY(0);}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Les Protocoles Réseau</h1>
+    <p>Site éducatif interactif avec animations</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>1️⃣ TCP</h2>
+<ul>
+<li>Protocole de transport fiable</li>
+<li>Livraison correcte et ordonnée</li>
+<li>Utilise des ACK</li>
+<li>Plus lent que UDP</li>
+<li><strong>Utilisé par :</strong> HTTP, HTTPS, FTP, SSH</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>2️⃣ UDP</h2>
+<ul>
+<li>Transport rapide</li>
+<li>Pas de garantie de livraison</li>
+<li>Pas de contrôle d’erreur</li>
+<li><strong>Utilisé pour :</strong> Streaming, Jeux, VoIP</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>3️⃣ ICMP</h2>
+<ul>
+<li>Diagnostic réseau</li>
+<li>Teste la connectivité</li>
+<li>Exemple : ping</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>4️⃣ ARP</h2>
+<ul>
+<li>Convertit IP → MAC</li>
+<li>Fonctionne en LAN</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>5️⃣ DNS</h2>
+<ul>
+<li>Nom de domaine → IP</li>
+<li>Ex : google.com → 142.250.x.x</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>6️⃣ HTTP</h2>
+<ul>
+<li>Transfert pages web</li>
+<li>Non sécurisé</li>
+<li>Port 80</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>7️⃣ HTTPS</h2>
+<ul>
+<li>Version sécurisée HTTP</li>
+<li>SSL/TLS</li>
+<li>Port 443</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>8️⃣ FTP</h2>
+<ul>
+<li>Transfert fichiers</li>
+<li>Non sécurisé</li>
+<li>Port 21</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>9️⃣ SSH</h2>
+<ul>
+<li>Connexion distante sécurisée</li>
+<li>Chiffré</li>
+<li>Port 22</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>🔟 Telnet</h2>
+<ul>
+<li>Connexion distante</li>
+<li>Non sécurisé</li>
+<li>Port 23</li>
+</ul>
+</div>
+
+<h2 style="text-align:center;margin-top:50px;">Résumé rapide</h2>
+
+<table>
+<tr>
+<th>Protocole</th>
+<th>Rôle</th>
+<th>Port</th>
+<th>Sécurisé</th>
+</tr>
+<tr><td>TCP</td><td>Transport fiable</td><td>-</td><td>Oui</td></tr>
+<tr><td>UDP</td><td>Transport rapide</td><td>-</td><td>Non</td></tr>
+<tr><td>ICMP</td><td>Diagnostic</td><td>-</td><td>-</td></tr>
+<tr><td>ARP</td><td>IP → MAC</td><td>-</td><td>-</td></tr>
+<tr><td>DNS</td><td>Nom → IP</td><td>53</td><td>-</td></tr>
+<tr><td>HTTP</td><td>Web</td><td>80</td><td>Non</td></tr>
+<tr><td>HTTPS</td><td>Web sécurisé</td><td>443</td><td>Oui</td></tr>
+<tr><td>FTP</td><td>Fichiers</td><td>21</td><td>Non</td></tr>
+<tr><td>SSH</td><td>Accès distant</td><td>22</td><td>Oui</td></tr>
+<tr><td>Telnet</td><td>Accès distant</td><td>23</td><td>Non</td></tr>
+</table>
+
+</div>
+
+<footer>
+© 2026 - Site Réseau Animé
+</footer>
+
+<script>
+const cards = document.querySelectorAll('.card');
+
+window.addEventListener('scroll', () => {
+    cards.forEach(card => {
+        const position = card.getBoundingClientRect().top;
+        const screenHeight = window.innerHeight;
+        if(position < screenHeight - 100){
+            card.classList.add('show');
+        }
+    });
+});
+</script>
+
+</body>
+</html>
