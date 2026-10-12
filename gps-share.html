@@ -1,39 +1,50 @@
-salam 3alaykom 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>gps</title>
+  <title>Partage GPS</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
       background: #101827;
       color: white;
       text-align: center;
       padding: 16px;
+      margin: 0;
     }
 
     .card {
       max-width: 480px;
-      margin: 20px auto;
+      margin: 30px auto;
       padding: 22px;
       background: #1e293b;
       border-radius: 15px;
+      box-shadow: 0 10px 30px #0003;
     }
 
-    button, input {
+    h1 {
+      color: #86efac;
+      font-size: 26px;
+    }
+
+    .description {
+      color: #cbd5e1;
+      line-height: 1.7;
+    }
+
+    button {
       box-sizing: border-box;
       width: 100%;
       padding: 13px;
       margin: 8px 0;
       border-radius: 8px;
       font-size: 16px;
-    }
-
-    button {
-      background: #22c55e;
-      color: #052e16;
       border: 0;
       font-weight: bold;
       cursor: pointer;
@@ -44,82 +55,91 @@ salam 3alaykom
       cursor: not-allowed;
     }
 
+    .primary {
+      background: #22c55e;
+      color: #052e16;
+    }
+
     .stop {
       background: #f87171;
       color: #450a0a;
-    }
-
-    input {
-      border: 1px solid #64748b;
     }
 
     #code {
       overflow-wrap: anywhere;
       color: #86efac;
       font-size: 13px;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 8px;
     }
 
-    #status, #coordinates {
+    #status {
       overflow-wrap: anywhere;
+      line-height: 1.6;
+      color: #bfdbfe;
     }
 
-    a {
-      color: #93c5fd;
-    }
-
-    hr {
-      border-color: #475569;
-      margin: 25px 0;
+    .note {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-top: 20px;
     }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>📍 brit n3rfk fin kayn 🙂 </h1>
-    <p>matkhaf mn walo rir lah ister ila khtfok n3rfk fin kayn </p>
+  <main class="card">
+    <h1>📍 Partage GPS</h1>
 
-    <h3>📱 Téléphone</h3>
-    <button id="createBtn">1. Créer un code secret</button>
+    <p class="description">
+      Partagez votre position uniquement avec une personne
+      de confiance, après avoir donné votre accord.
+    </p>
+
+    <button id="createBtn" class="primary">
+      1. Créer un code secret
+    </button>
+
     <p id="code">Aucune session créée.</p>
-    <button id="copyBtn" disabled>Copier le code</button>
-    <button id="startBtn" disabled>
+
+    <button id="copyBtn" class="primary" disabled>
+      Copier le code
+    </button>
+
+    <button id="startBtn" class="primary" disabled>
       2. Démarrer le partage GPS
     </button>
-    <button id="stopBtn" class="stop">
+
+    <button id="stopBtn" class="stop" disabled>
       Arrêter le partage
     </button>
 
-    <hr>
-
-    <h3>💻 Ordinateur</h3>
-    <input
-      id="roomInput"
-      placeholder="Coller le code secret ici"
-      autocomplete="off"
-    >
-    <button id="joinBtn">Afficher la position</button>
-
     <p id="status">Connexion à Firebase...</p>
-    <p id="coordinates"></p>
-    <p id="mapLink"></p>
-  </div>
+
+    <p class="note">
+      Votre position ne sera partagée qu'après votre autorisation.
+      Vous pouvez arrêter le partage à tout moment.
+    </p>
+  </main>
 
   <script type="module">
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
     import {
       getAuth,
       signInAnonymously
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     import {
       getDatabase,
       ref,
-      set,
-      onValue
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+      set
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBaqab6yuUvIhJ3XSiV93qgRivl7z5OOfo",
@@ -132,39 +152,36 @@ salam 3alaykom
       measurementId: "G-0LR1706DJZ"
     };
 
-    const status = document.getElementById("status");
-    const codeDisplay = document.getElementById("code");
     const createBtn = document.getElementById("createBtn");
     const copyBtn = document.getElementById("copyBtn");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
-    const roomInput = document.getElementById("roomInput");
-    const coordinates = document.getElementById("coordinates");
-    const mapLink = document.getElementById("mapLink");
-
-    let user = null;
-    let roomCode = null;
-    let watchId = null;
-    let unsubscribe = null;
+    const codeDisplay = document.getElementById("code");
+    const status = document.getElementById("status");
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    let user = null;
+    let roomCode = null;
+    let watchId = null;
+    let sharing = false;
+
     try {
       const result = await signInAnonymously(auth);
       user = result.user;
       status.textContent =
-        "Connecté. Vous pouvez créer une session ou saisir un code.";
+        "Connexion réussie. Vous pouvez créer une session.";
     } catch (error) {
       status.textContent =
-        "Erreur de connexion Firebase : " + error.message;
+        "Erreur Firebase : " + error.message;
+      createBtn.disabled = true;
     }
 
     createBtn.addEventListener("click", async () => {
       if (!user) {
-        status.textContent =
-          "Connexion impossible. Vérifiez Firebase Authentication.";
+        status.textContent = "Connexion Firebase impossible.";
         return;
       }
 
@@ -173,15 +190,16 @@ salam 3alaykom
         watchId = null;
       }
 
+      sharing = false;
       roomCode = null;
       startBtn.disabled = true;
+      stopBtn.disabled = true;
       copyBtn.disabled = true;
       createBtn.disabled = true;
       codeDisplay.textContent = "Création en cours...";
 
       try {
         const bytes = crypto.getRandomValues(new Uint8Array(32));
-
         const newCode = Array.from(
           bytes,
           byte => byte.toString(16).padStart(2, "0")
@@ -193,10 +211,12 @@ salam 3alaykom
         codeDisplay.textContent = "Code secret : " + roomCode;
         startBtn.disabled = false;
         copyBtn.disabled = false;
+
         status.textContent =
-          "Session créée. Transférez le code vers votre PC.";
+          "Session créée. Vous pouvez démarrer le partage GPS.";
       } catch (error) {
-        status.textContent = "Erreur de création : " + error.message;
+        status.textContent =
+          "Erreur de création : " + error.message;
       } finally {
         createBtn.disabled = false;
       }
@@ -207,15 +227,15 @@ salam 3alaykom
 
       try {
         await navigator.clipboard.writeText(roomCode);
-        status.textContent = "Code copié. Envoyez-le à votre PC.";
+        status.textContent = "Code copié avec succès.";
       } catch {
         status.textContent =
-          "Copie automatique impossible. Sélectionnez le code et copiez-le.";
+          "Copie impossible. Sélectionnez et copiez le code manuellement.";
       }
     });
 
     startBtn.addEventListener("click", () => {
-      if (!roomCode || !user) return;
+      if (!roomCode || !user || sharing) return;
 
       if (!navigator.geolocation) {
         status.textContent =
@@ -223,16 +243,16 @@ salam 3alaykom
         return;
       }
 
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-
+      sharing = true;
       startBtn.disabled = true;
+      stopBtn.disabled = false;
       status.textContent =
-        "Autorisez la localisation dans votre navigateur...";
+        "Demande d'autorisation de localisation...";
 
       watchId = navigator.geolocation.watchPosition(
         async position => {
+          if (!sharing || !roomCode) return;
+
           const location = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -246,8 +266,10 @@ salam 3alaykom
               location
             );
 
-            status.textContent =
-              "Partage GPS actif. Votre position est actualisée.";
+            if (sharing) {
+              status.textContent =
+                "Partage GPS actif. Votre position est actualisée.";
+            }
           } catch (error) {
             status.textContent =
               "Erreur d'envoi Firebase : " + error.message;
@@ -255,7 +277,15 @@ salam 3alaykom
         },
         error => {
           status.textContent = "Erreur GPS : " + error.message;
+          sharing = false;
+
+          if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+
           startBtn.disabled = false;
+          stopBtn.disabled = true;
         },
         {
           enableHighAccuracy: true,
@@ -266,89 +296,35 @@ salam 3alaykom
     });
 
     stopBtn.addEventListener("click", async () => {
+      sharing = false;
+
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
       }
 
       startBtn.disabled = !roomCode;
-      status.textContent = "Partage GPS arrêté.";
+      stopBtn.disabled = true;
+      status.textContent = "Arrêt du partage...";
 
       if (roomCode && user) {
         try {
-          await set(
-            ref(db, `rooms/${roomCode}/location`),
-            null
-          );
+          await set(ref(db, `rooms/${roomCode}/location`), null);
           status.textContent =
-            "Partage arrêté et dernière position supprimée.";
+            "Partage arrêté. La dernière position a été supprimée.";
         } catch (error) {
           status.textContent =
             "GPS arrêté, mais suppression impossible : " +
             error.message;
         }
+      } else {
+        status.textContent = "Partage GPS arrêté.";
       }
-    });
-
-    document.getElementById("joinBtn").addEventListener("click", () => {
-      const code = roomInput.value.trim().toLowerCase();
-
-      if (!/^[0-9a-f]{64}$/.test(code)) {
-        status.textContent =
-          "Code invalide. Vérifiez le code secret de 64 caractères.";
-        return;
-      }
-
-      if (unsubscribe) {
-        unsubscribe();
-        unsubscribe = null;
-      }
-
-      coordinates.textContent = "";
-      mapLink.replaceChildren();
-      status.textContent = "Recherche de la position...";
-
-      unsubscribe = onValue(
-        ref(db, `rooms/${code}/location`),
-        snapshot => {
-          const loc = snapshot.val();
-
-          if (
-            !loc ||
-            typeof loc.latitude !== "number" ||
-            typeof loc.longitude !== "number"
-          ) {
-            status.textContent =
-              "Aucune position disponible. Le partage est peut-être arrêté.";
-            coordinates.textContent = "";
-            mapLink.replaceChildren();
-            return;
-          }
-
-          status.textContent = "Position reçue.";
-
-          coordinates.textContent =
-            `Latitude : ${loc.latitude} | ` +
-            `Longitude : ${loc.longitude} | ` +
-            `Précision : ±${Math.round(loc.accuracy)} m`;
-
-          const link = document.createElement("a");
-          link.href =
-            `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = "Ouvrir dans Google Maps";
-
-          mapLink.replaceChildren(link);
-        },
-        error => {
-          status.textContent =
-            "Erreur de lecture Firebase : " + error.message;
-        }
-      );
     });
 
     window.addEventListener("pagehide", () => {
+      sharing = false;
+
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
       }
@@ -356,4 +332,3 @@ salam 3alaykom
   </script>
 </body>
 </html>
-```
