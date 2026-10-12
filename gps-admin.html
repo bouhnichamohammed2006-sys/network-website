@@ -4,70 +4,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS Admin</title>
+  <title>GPS Admin - MBH</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: #f8fafc;
+      margin: 0; padding: 20px; font-family: Arial, sans-serif;
+      background: #101827; color: #f8fafc;
     }
-    main {
-      max-width: 650px;
-      margin: 35px auto;
-      padding: 24px;
-      background: #1e293b;
-      border-radius: 16px;
-    }
+    main { max-width: 1100px; margin: auto; }
     h1 { color: #60a5fa; }
+    .panel, .device {
+      background: #1e293b; padding: 18px; border-radius: 12px;
+      margin: 14px 0;
+    }
     input, button {
-      width: 100%;
-      padding: 13px;
-      margin-top: 12px;
-      border-radius: 8px;
-      font-size: 16px;
+      width: 100%; padding: 12px; margin: 7px 0;
+      border-radius: 8px; font-size: 16px;
     }
     input { border: 1px solid #64748b; }
     button {
-      border: 0;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
+      border: 0; background: #2563eb; color: white; cursor: pointer;
     }
-    #status { margin: 18px 0; }
-    a { color: #60a5fa; }
-    .note { color: #cbd5e1; font-size: 14px; }
+    button.secondary { background: #475569; }
+    #map { height: 430px; border-radius: 12px; margin: 16px 0; }
+    .muted { color: #cbd5e1; }
+    .device button { margin-top: 12px; }
+    a { color: #93c5fd; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
 <main>
   <h1>GPS Admin</h1>
-  <p>Entrer le code de la salle pour afficher la position.</p>
+  <p class="muted">Tableau de bord des appareils ayant autorisé le partage GPS.</p>
 
-  <input id="roomCode" type="password"
-         placeholder="Code de la salle" autocomplete="off">
-  <button id="showBtn">Afficher la position</button>
-  <button id="hideBtn">Arrêter le suivi</button>
+  <section id="loginPanel" class="panel">
+    <h2>Connexion administrateur</h2>
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="E-mail Admin" required autocomplete="username">
+      <input id="password" type="password" placeholder="Mot de passe Admin" required autocomplete="current-password">
+      <button type="submit">Se connecter</button>
+    </form>
+  </section>
 
-  <p id="status">En attente du code.</p>
-  <div id="location"></div>
-
-  <p class="note">
-    Page d'administration. Ne partagez pas ce lien ni les codes des salles.
-  </p>
+  <section id="dashboard" hidden>
+    <div class="panel">
+      <p id="status">Chargement...</p>
+      <button id="refreshBtn">Actualiser la liste</button>
+      <button id="logoutBtn" class="secondary">Déconnexion</button>
+    </div>
+    <div id="map"></div>
+    <h2>Appareils</h2>
+    <div id="devices"></div>
+  </section>
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
-  import { initializeApp } from
-    "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-  import { getAuth, signInAnonymously } from
-    "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-  import { getDatabase, ref, onValue } from
-    "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getDatabase, ref, onValue
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBaqab6yuUvIhJ3XSiV93qgRivl7z5OOfo",
@@ -80,81 +82,171 @@
     measurementId: "G-0LR1706DJZ"
   };
 
+  const ADMIN_UID = "cJrkbiGm1Ud91WWNSd0K8XN64D23";
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  const codeInput = document.getElementById("roomCode");
-  const status = document.getElementById("status");
-  const locationBox = document.getElementById("location");
-  let unsubscribe = null;
+  const loginPanel = document.getElementById("loginPanel");
+  const dashboard = document.getElementById("dashboard");
+  const statusBox = document.getElementById("status");
+  const devicesBox = document.getElementById("devices");
 
-  document.getElementById("showBtn").addEventListener("click", async () => {
-    const code = codeInput.value.trim();
+  let stopListening = null;
+  let map = null;
+  let markers = {};
 
-    if (!/^[a-f0-9]{64}$/i.test(code)) {
-      status.textContent = "Code invalide. Vérifiez les 64 caractères.";
+  function showMap() {
+    if (map) return;
+    map = L.map("map").setView([31.7917, -7.0926], 5);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+  }
+
+  function clearMarkers() {
+    Object.values(markers).forEach(marker => map.removeLayer(marker));
+    markers = {};
+  }
+
+  function safeText(value) {
+    return typeof value === "string" && value.trim() ? value.trim() : "Non renseigné";
+  }
+
+  function renderClients(snapshot) {
+    devicesBox.replaceChildren();
+    clearMarkers();
+
+    if (!snapshot.exists()) {
+      statusBox.textContent = "Aucun appareil enregistré pour le moment.";
       return;
     }
 
-    if (unsubscribe) unsubscribe();
-    locationBox.replaceChildren();
-    status.textContent = "Connexion à Firebase...";
+    const clients = snapshot.val();
+    let count = 0;
+    const bounds = [];
 
+    for (const [uid, client] of Object.entries(clients)) {
+      const profile = client?.profile || {};
+      const location = client?.location || {};
+      const online = client?.status === "online";
+
+      const card = document.createElement("article");
+      card.className = "device";
+
+      const heading = document.createElement("h3");
+      heading.textContent = `${safeText(profile.prenom)} ${safeText(profile.nom)}`;
+
+      const phone = document.createElement("p");
+      phone.textContent = "Téléphone : " + safeText(profile.telephone);
+
+      const state = document.createElement("p");
+      state.textContent = "Partage : " + (online ? "Actif" : "Arrêté / hors ligne");
+
+      card.append(heading, phone, state);
+
+      const validCoordinates =
+        typeof location.latitude === "number" &&
+        typeof location.longitude === "number" &&
+        Number.isFinite(location.latitude) &&
+        Number.isFinite(location.longitude) &&
+        Math.abs(location.latitude) <= 90 &&
+        Math.abs(location.longitude) <= 180;
+
+      if (validCoordinates) {
+        const point = [location.latitude, location.longitude];
+        const marker = L.marker(point).addTo(map);
+        marker.bindPopup(
+          `${safeText(profile.prenom)} ${safeText(profile.nom)}`
+        );
+        markers[uid] = marker;
+        bounds.push(point);
+
+        const coordinates = document.createElement("p");
+        coordinates.textContent =
+          `Latitude : ${location.latitude.toFixed(5)}, Longitude : ${location.longitude.toFixed(5)}`;
+
+        const mapLink = document.createElement("a");
+        mapLink.href = `https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=16/${location.latitude}/${location.longitude}`;
+        mapLink.target = "_blank";
+        mapLink.rel = "noopener noreferrer";
+        mapLink.textContent = "Ouvrir la position sur la carte";
+
+        card.append(coordinates, mapLink);
+      } else {
+        const noLocation = document.createElement("p");
+        noLocation.textContent = "Aucune position GPS valide disponible.";
+        card.append(noLocation);
+      }
+
+      devicesBox.append(card);
+      count++;
+    }
+
+    statusBox.textContent = `Nombre d'appareils : ${count}`;
+    if (bounds.length === 1) map.setView(bounds[0], 15);
+    else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+  }
+
+  function stopDashboard() {
+    if (stopListening) stopListening();
+    stopListening = null;
+    devicesBox.replaceChildren();
+    if (map) {
+      clearMarkers();
+      map.remove();
+      map = null;
+      markers = {};
+    }
+  }
+
+  document.getElementById("loginForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    statusBox.textContent = "Connexion...";
     try {
-      await signInAnonymously(auth);
-
-      unsubscribe = onValue(
-        ref(db, `rooms/${code}/location`),
-        (snapshot) => {
-          locationBox.replaceChildren();
-
-          if (!snapshot.exists()) {
-            status.textContent =
-              "Aucune position disponible. Vérifiez que le partage est actif.";
-            return;
-          }
-
-          const data = snapshot.val();
-          if (typeof data.latitude !== "number" ||
-              typeof data.longitude !== "number") {
-            status.textContent = "Données de position invalides.";
-            return;
-          }
-
-          status.textContent =
-            "Position reçue. Précision : " +
-            (Number.isFinite(data.accuracy)
-              ? Math.round(data.accuracy) + " m"
-              : "non précisée");
-
-          const coords = document.createElement("p");
-          coords.textContent =
-            `Latitude : ${data.latitude} | Longitude : ${data.longitude}`;
-
-          const mapLink = document.createElement("a");
-          mapLink.href =
-            `https://www.google.com/maps?q=${data.latitude},${data.longitude}`;
-          mapLink.target = "_blank";
-          mapLink.rel = "noopener noreferrer";
-          mapLink.textContent = "Ouvrir dans Google Maps";
-
-          locationBox.append(coords, mapLink);
-        },
-        (error) => {
-          status.textContent = "Erreur Firebase : " + error.message;
-        }
+      await signInWithEmailAndPassword(
+        auth,
+        document.getElementById("email").value.trim(),
+        document.getElementById("password").value
       );
     } catch (error) {
-      status.textContent = "Connexion impossible : " + error.message;
+      statusBox.textContent = "Connexion impossible : " + error.message;
     }
   });
 
-  document.getElementById("hideBtn").addEventListener("click", () => {
-    if (unsubscribe) unsubscribe();
-    unsubscribe = null;
-    locationBox.replaceChildren();
-    status.textContent = "Suivi arrêté.";
+  onAuthStateChanged(auth, (user) => {
+    stopDashboard();
+    if (user && user.uid === ADMIN_UID) {
+      loginPanel.hidden = true;
+      dashboard.hidden = false;
+      showMap();
+      statusBox.textContent = "Chargement des appareils...";
+      stopListening = onValue(
+        ref(db, "clients"),
+        renderClients,
+        (error) => {
+          statusBox.textContent = "Erreur Firebase : " + error.message;
+        }
+      );
+    } else {
+      dashboard.hidden = true;
+      loginPanel.hidden = false;
+      if (user) {
+        statusBox.textContent = "Ce compte n'a pas l'autorisation Admin.";
+        signOut(auth);
+      }
+    }
+  });
+
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    statusBox.textContent = "Les données sont mises à jour automatiquement.";
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    stopDashboard();
+    await signOut(auth);
   });
 </script>
 </body>

@@ -6,120 +6,79 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Partage GPS</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       font-family: Arial, sans-serif;
       background: #101827;
       color: white;
-      text-align: center;
-      padding: 16px;
       margin: 0;
+      padding: 16px;
     }
-
     .card {
       max-width: 480px;
-      margin: 30px auto;
+      margin: 25px auto;
       padding: 22px;
       background: #1e293b;
       border-radius: 15px;
       box-shadow: 0 10px 30px #0003;
     }
-
-    h1 {
-      color: #86efac;
-      font-size: 26px;
-    }
-
-    .description {
-      color: #cbd5e1;
-      line-height: 1.7;
-    }
-
-    button {
-      box-sizing: border-box;
+    h1 { color: #86efac; text-align: center; }
+    .description { color: #cbd5e1; line-height: 1.6; text-align: center; }
+    label { display: block; margin: 14px 0 6px; }
+    input, select {
       width: 100%;
       padding: 13px;
-      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 12px;
+      border: 0;
       border-radius: 8px;
       font-size: 16px;
-      border: 0;
       font-weight: bold;
       cursor: pointer;
     }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .primary {
-      background: #22c55e;
-      color: #052e16;
-    }
-
-    .stop {
-      background: #f87171;
-      color: #450a0a;
-    }
-
-    #code {
-      overflow-wrap: anywhere;
-      color: #86efac;
-      font-size: 13px;
-      padding: 10px;
-      background: #0f172a;
-      border-radius: 8px;
-    }
-
-    #status {
-      overflow-wrap: anywhere;
-      line-height: 1.6;
-      color: #bfdbfe;
-    }
-
-    .note {
-      font-size: 12px;
-      color: #94a3b8;
-      line-height: 1.6;
-      margin-top: 20px;
-    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .primary { background: #22c55e; color: #052e16; }
+    .stop { background: #f87171; color: #450a0a; }
+    #status { color: #bfdbfe; line-height: 1.6; overflow-wrap: anywhere; }
+    .note { color: #94a3b8; font-size: 12px; line-height: 1.6; }
   </style>
 </head>
-
 <body>
   <main class="card">
     <h1>📍 Partage GPS</h1>
-
     <p class="description">
-      Partagez votre position uniquement avec une personne
-      de confiance, après avoir donné votre accord.
+      Remplissez vos informations, puis autorisez la localisation
+      pour partager votre position.
     </p>
 
-    <button id="createBtn" class="primary">
-      1. Créer un code secret
-    </button>
+    <label for="nom">Nom</label>
+    <input id="nom" autocomplete="family-name" placeholder="Votre nom">
 
-    <p id="code">Aucune session créée.</p>
+    <label for="prenom">Prénom</label>
+    <input id="prenom" autocomplete="given-name" placeholder="Votre prénom">
 
-    <button id="copyBtn" class="primary" disabled>
-      Copier le code
-    </button>
+    <label for="telephone">Type de téléphone</label>
+    <input id="telephone" placeholder="Ex. : Samsung Galaxy A15">
 
-    <button id="startBtn" class="primary" disabled>
-      2. Démarrer le partage GPS
-    </button>
+    <label for="password">Mot de passe</label>
+    <input id="password" type="password" autocomplete="current-password"
+           placeholder="Mot de passe donné par l'administrateur">
 
-    <button id="stopBtn" class="stop" disabled>
-      Arrêter le partage
-    </button>
+    <button id="startBtn" class="primary">Démarrer le partage GPS</button>
+    <button id="stopBtn" class="stop" disabled>Arrêter le partage</button>
 
     <p id="status">Connexion à Firebase...</p>
 
     <p class="note">
-      Votre position ne sera partagée qu'après votre autorisation.
+      Votre position sera partagée après votre autorisation.
       Vous pouvez arrêter le partage à tout moment.
     </p>
   </main>
@@ -128,16 +87,11 @@
     import { initializeApp } from
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-    import {
-      getAuth,
-      signInAnonymously
-    } from
+    import { getAuth, signInAnonymously } from
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     import {
-      getDatabase,
-      ref,
-      set
+      getDatabase, ref, set, onDisconnect
     } from
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -152,147 +106,129 @@
       measurementId: "G-0LR1706DJZ"
     };
 
-    const createBtn = document.getElementById("createBtn");
-    const copyBtn = document.getElementById("copyBtn");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const codeDisplay = document.getElementById("code");
-    const status = document.getElementById("status");
+    // Mot de passe de démonstration seulement.
+    // Il est visible dans le code source de la page.
+    const DEMO_PASSWORD = "2026";
+
+    const $ = id => document.getElementById(id);
+    const startBtn = $("startBtn");
+    const stopBtn = $("stopBtn");
+    const status = $("status");
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
     let user = null;
-    let roomCode = null;
     let watchId = null;
     let sharing = false;
 
     try {
       const result = await signInAnonymously(auth);
       user = result.user;
-      status.textContent =
-        "Connexion réussie. Vous pouvez créer une session.";
+      status.textContent = "Connecté. Remplissez le formulaire pour continuer.";
     } catch (error) {
-      status.textContent =
-        "Erreur Firebase : " + error.message;
-      createBtn.disabled = true;
+      status.textContent = "Erreur de connexion Firebase : " + error.message;
+      startBtn.disabled = true;
     }
 
-    createBtn.addEventListener("click", async () => {
-      if (!user) {
-        status.textContent = "Connexion Firebase impossible.";
+    startBtn.addEventListener("click", async () => {
+      if (!user || sharing) return;
+
+      const nom = $("nom").value.trim();
+      const prenom = $("prenom").value.trim();
+      const telephone = $("telephone").value.trim();
+      const password = $("password").value;
+
+      if (!nom || !prenom || !telephone || !password) {
+        status.textContent = "Veuillez remplir tous les champs.";
         return;
       }
 
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
+      if (password !== DEMO_PASSWORD) {
+        status.textContent = "Mot de passe incorrect.";
+        return;
       }
-
-      sharing = false;
-      roomCode = null;
-      startBtn.disabled = true;
-      stopBtn.disabled = true;
-      copyBtn.disabled = true;
-      createBtn.disabled = true;
-      codeDisplay.textContent = "Création en cours...";
-
-      try {
-        const bytes = crypto.getRandomValues(new Uint8Array(32));
-        const newCode = Array.from(
-          bytes,
-          byte => byte.toString(16).padStart(2, "0")
-        ).join("");
-
-        await set(ref(db, `rooms/${newCode}/ownerUid`), user.uid);
-
-        roomCode = newCode;
-        codeDisplay.textContent = "Code secret : " + roomCode;
-        startBtn.disabled = false;
-        copyBtn.disabled = false;
-
-        status.textContent =
-          "Session créée. Vous pouvez démarrer le partage GPS.";
-      } catch (error) {
-        status.textContent =
-          "Erreur de création : " + error.message;
-      } finally {
-        createBtn.disabled = false;
-      }
-    });
-
-    copyBtn.addEventListener("click", async () => {
-      if (!roomCode) return;
-
-      try {
-        await navigator.clipboard.writeText(roomCode);
-        status.textContent = "Code copié avec succès.";
-      } catch {
-        status.textContent =
-          "Copie impossible. Sélectionnez et copiez le code manuellement.";
-      }
-    });
-
-    startBtn.addEventListener("click", () => {
-      if (!roomCode || !user || sharing) return;
 
       if (!navigator.geolocation) {
-        status.textContent =
-          "La géolocalisation n'est pas prise en charge.";
+        status.textContent = "La géolocalisation n'est pas prise en charge.";
         return;
       }
 
-      sharing = true;
       startBtn.disabled = true;
-      stopBtn.disabled = false;
-      status.textContent =
-        "Demande d'autorisation de localisation...";
+      status.textContent = "Demande d'autorisation GPS...";
 
-      watchId = navigator.geolocation.watchPosition(
-        async position => {
-          if (!sharing || !roomCode) return;
+      try {
+        // Chaque utilisateur anonyme reçoit un identifiant Firebase.
+        const clientRef = ref(db, `clients/${user.uid}`);
 
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: Date.now()
-          };
+        await set(ref(db, `clients/${user.uid}/profile`), {
+          nom,
+          prenom,
+          telephone,
+          status: "connecting",
+          updatedAt: Date.now()
+        });
 
-          try {
-            await set(
-              ref(db, `rooms/${roomCode}/location`),
-              location
-            );
+        await onDisconnect(ref(db, `clients/${user.uid}/status`))
+          .set("offline");
 
-            if (sharing) {
+        sharing = true;
+        stopBtn.disabled = false;
+
+        watchId = navigator.geolocation.watchPosition(
+          async position => {
+            if (!sharing) return;
+
+            try {
+              await set(ref(db, `clients/${user.uid}/location`), {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                timestamp: Date.now()
+              });
+
+              await set(ref(db, `clients/${user.uid}/status`), "online");
+
+              if (sharing) {
+                status.textContent =
+                  "Partage GPS actif. Votre position est actualisée.";
+              }
+            } catch (error) {
               status.textContent =
-                "Partage GPS actif. Votre position est actualisée.";
+                "Erreur d'envoi Firebase : " + error.message;
             }
-          } catch (error) {
-            status.textContent =
-              "Erreur d'envoi Firebase : " + error.message;
-          }
-        },
-        error => {
-          status.textContent = "Erreur GPS : " + error.message;
-          sharing = false;
+          },
+          async error => {
+            status.textContent = "Erreur GPS : " + error.message;
+            sharing = false;
 
-          if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId);
-            watchId = null;
-          }
+            if (watchId !== null) {
+              navigator.geolocation.clearWatch(watchId);
+              watchId = null;
+            }
 
-          startBtn.disabled = false;
-          stopBtn.disabled = true;
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 20000
-        }
-      );
+            stopBtn.disabled = true;
+            startBtn.disabled = false;
+
+            try {
+              await set(ref(db, `clients/${user.uid}/status`), "offline");
+            } catch {}
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 20000
+          }
+        );
+      } catch (error) {
+        sharing = false;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        status.textContent =
+          "Erreur Firebase : " + error.message +
+          " (les règles Firebase devront peut-être être adaptées).";
+      }
     });
 
     stopBtn.addEventListener("click", async () => {
@@ -303,30 +239,16 @@
         watchId = null;
       }
 
-      startBtn.disabled = !roomCode;
       stopBtn.disabled = true;
+      startBtn.disabled = false;
       status.textContent = "Arrêt du partage...";
 
-      if (roomCode && user) {
-        try {
-          await set(ref(db, `rooms/${roomCode}/location`), null);
-          status.textContent =
-            "Partage arrêté. La dernière position a été supprimée.";
-        } catch (error) {
-          status.textContent =
-            "GPS arrêté, mais suppression impossible : " +
-            error.message;
-        }
-      } else {
-        status.textContent = "Partage GPS arrêté.";
-      }
-    });
-
-    window.addEventListener("pagehide", () => {
-      sharing = false;
-
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
+      try {
+        await set(ref(db, `clients/${user.uid}/location`), null);
+        await set(ref(db, `clients/${user.uid}/status`), "offline");
+        status.textContent = "Partage arrêté. La position a été supprimée.";
+      } catch (error) {
+        status.textContent = "GPS arrêté, mais erreur Firebase : " + error.message;
       }
     });
   </script>
