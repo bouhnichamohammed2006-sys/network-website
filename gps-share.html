@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyPhoneGPS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 35px auto;
+      padding: 20px;
+      background: #f3f6fa;
+      color: #172033;
+    }
+    main {
+      background: white;
+      padding: 24px;
+      border-radius: 14px;
+    }
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 7px 0;
+      font-size: 16px;
+    }
+    button { cursor: pointer; }
+    .coords {
+      background: #eef4ff;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+    #status { font-weight: bold; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>MyPhoneGPS</h1>
+  <p>Connectez-vous avec votre compte Firebase sur les deux appareils.</p>
+
+  <form id="loginForm">
+    <label for="email">Adresse e-mail</label>
+    <input id="email" type="email" autocomplete="username" required>
+
+    <label for="password">Mot de passe</label>
+    <input id="password" type="password"
+           autocomplete="current-password" required>
+
+    <button type="submit">Se connecter</button>
+  </form>
+
+  <button id="logoutBtn" hidden>Se déconnecter</button>
+
+  <section id="tracker" hidden>
+    <p>Compte connecté : <span id="account"></span></p>
+
+    <h2>Partager la position</h2>
+    <p>
+      Sur votre téléphone, appuyez ci-dessous pour autoriser
+      le partage de votre position. La page doit rester ouverte.
+    </p>
+
+    <button id="startBtn">Démarrer le partage GPS</button>
+    <button id="stopBtn" disabled>Arrêter le partage</button>
+
+    <p id="status">Connectez-vous pour commencer.</p>
+
+    <h2>Dernière position reçue</h2>
+    <div class="coords">
+      <p>Latitude : <span id="lat">—</span></p>
+      <p>Longitude : <span id="lon">—</span></p>
+      <p>Précision : <span id="accuracy">—</span></p>
+      <p>Mise à jour : <span id="updated">—</span></p>
+    </div>
+
+    <p><a id="mapLink" href="#" target="_blank"
+          rel="noopener" hidden>Ouvrir la position sur Google Maps</a></p>
+  </section>
+</main>
+
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+  import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBaqab6yuUvIhJ3XSiV93qgRivl7z5OOfo",
+    authDomain: "myphonegps.firebaseapp.com",
+    databaseURL: "https://myphonegps-default-rtdb.firebaseio.com",
+    projectId: "myphonegps",
+    storageBucket: "myphonegps.firebasestorage.app",
+    messagingSenderId: "93340951825",
+    appId: "1:93340951825:web:16ad8a2321d4d2c2a498b0"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  const $ = id => document.getElementById(id);
+  let currentUser = null;
+  let watchId = null;
+  let unsubscribe = null;
+  let lastWriteAt = 0;
+
+  $("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    $("status").textContent = "Connexion en cours...";
+
+    try {
+      await signInWithEmailAndPassword(
+        auth,
+        $("email").value.trim(),
+        $("password").value
+      );
+      $("password").value = "";
+    } catch (error) {
+      $("status").textContent =
+        "Connexion impossible : " + error.message;
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    stopSharing();
+    await signOut(auth);
+  });
+
+  onAuthStateChanged(auth, user => {
+    stopSharing();
+
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+
+    currentUser = user;
+    $("loginForm").hidden = !!user;
+    $("tracker").hidden = !user;
+    $("logoutBtn").hidden = !user;
+
+    if (!user) {
+      $("status").textContent = "Veuillez vous connecter.";
+      return;
+    }
+
+    $("account").textContent = user.email || "Compte connecté";
+
+    const locationRef = ref(db, "locations/" + user.uid);
+
+    unsubscribe = onValue(locationRef, snapshot => {
+      const data = snapshot.val();
+
+      if (!data) {
+        $("status").textContent =
+          "Aucune position reçue pour le moment.";
+        return;
+      }
+
+      $("lat").textContent = data.latitude;
+      $("lon").textContent = data.longitude;
+      $("accuracy").textContent =
+        data.accuracy + " mètres environ";
+      $("updated").textContent =
+        new Date(data.updatedAt).toLocaleString();
+
+      $("mapLink").href =
+        "https://www.google.com/maps?q=" +
+        encodeURIComponent(data.latitude + "," + data.longitude);
+
+      $("mapLink").hidden = false;
+      $("status").textContent = "Position chargée.";
+    }, error => {
+      $("status").textContent =
+        "Erreur de lecture : " + error.message;
+    });
+  });
+
+  $("startBtn").addEventListener("click", () => {
+    if (!currentUser) return;
+
+    if (!navigator.geolocation) {
+      $("status").textContent =
+        "La géolocalisation n'est pas disponible.";
+      return;
+    }
+
+    if (!window.isSecureContext) {
+      $("status").textContent =
+        "Ouvrez cette page avec HTTPS.";
+      return;
+    }
+
+    if (watchId !== null) return;
+
+    $("status").textContent =
+      "Demande d'autorisation GPS...";
+    $("startBtn").disabled = true;
+    $("stopBtn").disabled = false;
+
+    watchId = navigator.geolocation.watchPosition(
+      async position => {
+        $("status").textContent =
+          "Position obtenue. Mise à jour...";
+
+        const now = Date.now();
+        if (now - lastWriteAt < 10000) return;
+        lastWriteAt = now;
+
+        try {
+          await set(
+            ref(db, "locations/" + currentUser.uid),
+            {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: Math.round(position.coords.accuracy),
+              updatedAt: Date.now()
+            }
+          );
+
+          $("status").textContent =
+            "Position partagée avec votre compte.";
+        } catch (error) {
+          $("status").textContent =
+            "Erreur Firebase : " + error.message;
+        }
+      },
+      error => {
+        $("status").textContent =
+          "Erreur GPS : " + error.message;
+        stopSharing();
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 20000
+      }
+    );
+  });
+
+  $("stopBtn").addEventListener("click", stopSharing);
+
+  function stopSharing() {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    $("startBtn").disabled = false;
+    $("stopBtn").disabled = true;
+  }
+</script>
+</body>
+</html>
