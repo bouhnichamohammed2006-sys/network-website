@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تجربة صلاحية GPS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f3f6fa;
+      color: #172033;
+    }
+    main {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px #0001;
+    }
+    button {
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 9px;
+      background: #1769aa;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      overflow-wrap: anywhere;
+      line-height: 1.8;
+    }
+    .note { color: #4b5563; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>تجربة صلاحية GPS</h1>
+
+    <p>
+      هاد الموقع التجريبي كيطلب الإذن باش يقرا
+      الموقع الجغرافي ديال جهازك.
+    </p>
+
+    <p class="note">
+      الإحداثيات غادي تبان هنا فقط.
+      الموقع ما كيرسلها حتى لشي سيرفر.
+    </p>
+
+    <button id="gpsButton">طلب الإذن وعرض موقعي</button>
+    <div id="result" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const button = document.getElementById("gpsButton");
+    const result = document.getElementById("result");
+
+    button.addEventListener("click", () => {
+      if (!window.isSecureContext) {
+        result.textContent =
+          "خاصك تفتح الموقع عبر HTTPS باش تخدم التجربة.";
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        result.textContent =
+          "المتصفح ديالك ما كيدعمش Geolocation.";
+        return;
+      }
+
+      result.textContent = "كنستناو الموقع الجغرافي...";
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const c = position.coords;
+
+          result.replaceChildren();
+
+          const lines = [
+            "تم الحصول على الموقع بنجاح.",
+            "Latitude: " + c.latitude,
+            "Longitude: " + c.longitude,
+            "دقة الموقع تقريباً: " + c.accuracy + " متر"
+          ];
+
+          lines.forEach((line) => {
+            const p = document.createElement("p");
+            p.textContent = line;
+            result.appendChild(p);
+          });
+        },
+        (error) => {
+          const messages = {
+            1: "رفضتي الإذن أو المتصفح منع الوصول.",
+            2: "الموقع الجغرافي غير متوفر حالياً.",
+            3: "سالَت مدة الانتظار. جرّب مرة أخرى."
+          };
+
+          result.textContent =
+            messages[error.code] || "وقع خطأ غير معروف.";
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
+  </script>
+</body>
+</html>
