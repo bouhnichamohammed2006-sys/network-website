@@ -1,29 +1,359 @@
-
-{
-  "rules": {
-    "locations": {
-      "$phoneUid": {
-        ".read": "auth != null && (auth.uid === $phoneUid || root.child('paired').child($phoneUid).child(auth.uid).val() === true)",
-        ".write": "auth != null && auth.uid === $phoneUid"
-      }
-    },
-    "pairRequests": {
-      "$phoneUid": {
-        "$pcUid": {
-          ".read": "auth != null && auth.uid === $phoneUid",
-          ".write": "auth != null && (auth.uid === $pcUid || (auth.uid === $phoneUid && !newData.exists() && root.child('paired').child($phoneUid).child($pcUid).val() === true))",
-          ".validate": "newData.val() === true"
-        }
-      }
-    },
-    "paired": {
-      "$phoneUid": {
-        "$pcUid": {
-          ".read": "auth != null && auth.uid === $phoneUid",
-          ".write": "auth != null && auth.uid === $phoneUid && root.child('pairRequests').child($phoneUid).child($pcUid).val() === true",
-          ".validate": "newData.val() === true"
-        }
-      }
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partage GPS sécurisé</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: white;
+      text-align: center;
+      padding: 16px;
     }
-  }
-}
+
+    .card {
+      max-width: 480px;
+      margin: 20px auto;
+      padding: 22px;
+      background: #1e293b;
+      border-radius: 15px;
+    }
+
+    button, input {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #22c55e;
+      color: #052e16;
+      border: 0;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .stop {
+      background: #f87171;
+      color: #450a0a;
+    }
+
+    input {
+      border: 1px solid #64748b;
+    }
+
+    #code {
+      overflow-wrap: anywhere;
+      color: #86efac;
+      font-size: 13px;
+    }
+
+    #status, #coordinates {
+      overflow-wrap: anywhere;
+    }
+
+    a {
+      color: #93c5fd;
+    }
+
+    hr {
+      border-color: #475569;
+      margin: 25px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>📍 Partage GPS</h1>
+    <p>Partagez votre position uniquement avec une personne de confiance.</p>
+
+    <h3>📱 Téléphone</h3>
+    <button id="createBtn">1. Créer un code secret</button>
+    <p id="code">Aucune session créée.</p>
+    <button id="copyBtn" disabled>Copier le code</button>
+    <button id="startBtn" disabled>
+      2. Démarrer le partage GPS
+    </button>
+    <button id="stopBtn" class="stop">
+      Arrêter le partage
+    </button>
+
+    <hr>
+
+    <h3>💻 Ordinateur</h3>
+    <input
+      id="roomInput"
+      placeholder="Coller le code secret ici"
+      autocomplete="off"
+    >
+    <button id="joinBtn">Afficher la position</button>
+
+    <p id="status">Connexion à Firebase...</p>
+    <p id="coordinates"></p>
+    <p id="mapLink"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getAuth,
+      signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    import {
+      getDatabase,
+      ref,
+      set,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBaqab6yuUvIhJ3XSiV93qgRivl7z5OOfo",
+      authDomain: "myphonegps.firebaseapp.com",
+      databaseURL: "https://myphonegps-default-rtdb.firebaseio.com",
+      projectId: "myphonegps",
+      storageBucket: "myphonegps.firebasestorage.app",
+      messagingSenderId: "93340951825",
+      appId: "1:93340951825:web:16ad8a2321d4d2c2a498b0",
+      measurementId: "G-0LR1706DJZ"
+    };
+
+    const status = document.getElementById("status");
+    const codeDisplay = document.getElementById("code");
+    const createBtn = document.getElementById("createBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const roomInput = document.getElementById("roomInput");
+    const coordinates = document.getElementById("coordinates");
+    const mapLink = document.getElementById("mapLink");
+
+    let user = null;
+    let roomCode = null;
+    let watchId = null;
+    let unsubscribe = null;
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    try {
+      const result = await signInAnonymously(auth);
+      user = result.user;
+      status.textContent =
+        "Connecté. Vous pouvez créer une session ou saisir un code.";
+    } catch (error) {
+      status.textContent =
+        "Erreur de connexion Firebase : " + error.message;
+    }
+
+    createBtn.addEventListener("click", async () => {
+      if (!user) {
+        status.textContent =
+          "Connexion impossible. Vérifiez Firebase Authentication.";
+        return;
+      }
+
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+
+      roomCode = null;
+      startBtn.disabled = true;
+      copyBtn.disabled = true;
+      createBtn.disabled = true;
+      codeDisplay.textContent = "Création en cours...";
+
+      try {
+        const bytes = crypto.getRandomValues(new Uint8Array(32));
+
+        const newCode = Array.from(
+          bytes,
+          byte => byte.toString(16).padStart(2, "0")
+        ).join("");
+
+        await set(ref(db, `rooms/${newCode}/ownerUid`), user.uid);
+
+        roomCode = newCode;
+        codeDisplay.textContent = "Code secret : " + roomCode;
+        startBtn.disabled = false;
+        copyBtn.disabled = false;
+        status.textContent =
+          "Session créée. Transférez le code vers votre PC.";
+      } catch (error) {
+        status.textContent = "Erreur de création : " + error.message;
+      } finally {
+        createBtn.disabled = false;
+      }
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      if (!roomCode) return;
+
+      try {
+        await navigator.clipboard.writeText(roomCode);
+        status.textContent = "Code copié. Envoyez-le à votre PC.";
+      } catch {
+        status.textContent =
+          "Copie automatique impossible. Sélectionnez le code et copiez-le.";
+      }
+    });
+
+    startBtn.addEventListener("click", () => {
+      if (!roomCode || !user) return;
+
+      if (!navigator.geolocation) {
+        status.textContent =
+          "La géolocalisation n'est pas prise en charge.";
+        return;
+      }
+
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+
+      startBtn.disabled = true;
+      status.textContent =
+        "Autorisez la localisation dans votre navigateur...";
+
+      watchId = navigator.geolocation.watchPosition(
+        async position => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: Date.now()
+          };
+
+          try {
+            await set(
+              ref(db, `rooms/${roomCode}/location`),
+              location
+            );
+
+            status.textContent =
+              "Partage GPS actif. Votre position est actualisée.";
+          } catch (error) {
+            status.textContent =
+              "Erreur d'envoi Firebase : " + error.message;
+          }
+        },
+        error => {
+          status.textContent = "Erreur GPS : " + error.message;
+          startBtn.disabled = false;
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 20000
+        }
+      );
+    });
+
+    stopBtn.addEventListener("click", async () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+
+      startBtn.disabled = !roomCode;
+      status.textContent = "Partage GPS arrêté.";
+
+      if (roomCode && user) {
+        try {
+          await set(
+            ref(db, `rooms/${roomCode}/location`),
+            null
+          );
+          status.textContent =
+            "Partage arrêté et dernière position supprimée.";
+        } catch (error) {
+          status.textContent =
+            "GPS arrêté, mais suppression impossible : " +
+            error.message;
+        }
+      }
+    });
+
+    document.getElementById("joinBtn").addEventListener("click", () => {
+      const code = roomInput.value.trim().toLowerCase();
+
+      if (!/^[0-9a-f]{64}$/.test(code)) {
+        status.textContent =
+          "Code invalide. Vérifiez le code secret de 64 caractères.";
+        return;
+      }
+
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+      }
+
+      coordinates.textContent = "";
+      mapLink.replaceChildren();
+      status.textContent = "Recherche de la position...";
+
+      unsubscribe = onValue(
+        ref(db, `rooms/${code}/location`),
+        snapshot => {
+          const loc = snapshot.val();
+
+          if (
+            !loc ||
+            typeof loc.latitude !== "number" ||
+            typeof loc.longitude !== "number"
+          ) {
+            status.textContent =
+              "Aucune position disponible. Le partage est peut-être arrêté.";
+            coordinates.textContent = "";
+            mapLink.replaceChildren();
+            return;
+          }
+
+          status.textContent = "Position reçue.";
+
+          coordinates.textContent =
+            `Latitude : ${loc.latitude} | ` +
+            `Longitude : ${loc.longitude} | ` +
+            `Précision : ±${Math.round(loc.accuracy)} m`;
+
+          const link = document.createElement("a");
+          link.href =
+            `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Ouvrir dans Google Maps";
+
+          mapLink.replaceChildren(link);
+        },
+        error => {
+          status.textContent =
+            "Erreur de lecture Firebase : " + error.message;
+        }
+      );
+    });
+
+    window.addEventListener("pagehide", () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    });
+  </script>
+</body>
+</html>
+```
