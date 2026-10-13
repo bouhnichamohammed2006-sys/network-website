@@ -6,45 +6,105 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GPS Admin - MBH</title>
   <meta name="robots" content="noindex">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
   <style>
     * { box-sizing: border-box; }
+
     body {
-      margin: 0; padding: 20px; font-family: Arial, sans-serif;
-      background: #101827; color: #f8fafc;
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: #f8fafc;
     }
-    main { max-width: 1100px; margin: auto; }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+    }
+
     h1 { color: #60a5fa; }
+
     .panel, .device {
-      background: #1e293b; padding: 18px; border-radius: 12px;
+      background: #1e293b;
+      padding: 18px;
+      border-radius: 12px;
       margin: 14px 0;
     }
+
     input, button {
-      width: 100%; padding: 12px; margin: 7px 0;
-      border-radius: 8px; font-size: 16px;
+      width: 100%;
+      padding: 12px;
+      margin: 7px 0;
+      border-radius: 8px;
+      font-size: 16px;
     }
-    input { border: 1px solid #64748b; }
+
+    input {
+      border: 1px solid #64748b;
+    }
+
     button {
-      border: 0; background: #2563eb; color: white; cursor: pointer;
+      border: 0;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
     }
+
     button.secondary { background: #475569; }
-    #map { height: 430px; border-radius: 12px; margin: 16px 0; }
+
+    button.delete-btn { background: #dc2626; }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #map {
+      height: 430px;
+      border-radius: 12px;
+      margin: 16px 0;
+    }
+
     .muted { color: #cbd5e1; }
+
     .device button { margin-top: 12px; }
+
     a { color: #93c5fd; }
+
     [hidden] { display: none !important; }
   </style>
 </head>
+
 <body>
 <main>
   <h1>GPS Admin</h1>
-  <p class="muted">Tableau de bord des appareils ayant autorisé le partage GPS.</p>
+  <p class="muted">
+    Tableau de bord des appareils ayant autorisé le partage GPS.
+  </p>
 
   <section id="loginPanel" class="panel">
     <h2>Connexion administrateur</h2>
+
     <form id="loginForm">
-      <input id="email" type="email" placeholder="E-mail Admin" required autocomplete="username">
-      <input id="password" type="password" placeholder="Mot de passe Admin" required autocomplete="current-password">
+      <input
+        id="email"
+        type="email"
+        placeholder="E-mail Admin"
+        required
+        autocomplete="username"
+      >
+
+      <input
+        id="password"
+        type="password"
+        placeholder="Mot de passe Admin"
+        required
+        autocomplete="current-password"
+      >
+
       <button type="submit">Se connecter</button>
     </form>
   </section>
@@ -55,20 +115,33 @@
       <button id="refreshBtn">Actualiser la liste</button>
       <button id="logoutBtn" class="secondary">Déconnexion</button>
     </div>
+
     <div id="map"></div>
+
     <h2>Appareils</h2>
     <div id="devices"></div>
   </section>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
   import {
-    getDatabase, ref, onValue
+    getDatabase,
+    ref,
+    onValue,
+    remove
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
@@ -99,20 +172,70 @@
 
   function showMap() {
     if (map) return;
+
     map = L.map("map").setView([31.7917, -7.0926], 5);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map);
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }
+    ).addTo(map);
   }
 
   function clearMarkers() {
-    Object.values(markers).forEach(marker => map.removeLayer(marker));
+    if (map) {
+      Object.values(markers).forEach(marker => {
+        map.removeLayer(marker);
+      });
+    }
+
     markers = {};
   }
 
   function safeText(value) {
-    return typeof value === "string" && value.trim() ? value.trim() : "Non renseigné";
+    return typeof value === "string" && value.trim()
+      ? value.trim()
+      : "Non renseigné";
+  }
+
+  // Suppression des données d'un appareil
+  async function deleteDevice(uid, deviceName, button) {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser || currentUser.uid !== ADMIN_UID) {
+      alert("Accès refusé : administrateur uniquement.");
+      return;
+    }
+
+    const confirmed = confirm(
+      `Voulez-vous vraiment supprimer l'appareil "${deviceName}" ?\n\n` +
+      "Son profil, sa position GPS et son statut seront supprimés."
+    );
+
+    if (!confirmed) return;
+
+    button.disabled = true;
+    button.textContent = "Suppression...";
+
+    try {
+      await remove(ref(db, `clients/${uid}`));
+
+      statusBox.textContent = `Appareil supprimé : ${deviceName}`;
+
+      // La liste et la carte seront mises à jour par Firebase.
+    } catch (error) {
+      console.error("Erreur de suppression :", error);
+
+      alert(
+        "Suppression impossible : " + error.message +
+        "\n\nVérifiez les règles de sécurité Firebase."
+      );
+
+      button.disabled = false;
+      button.textContent = "🗑️ Supprimer l'appareil";
+    }
   }
 
   function renderClients(snapshot) {
@@ -137,15 +260,33 @@
       card.className = "device";
 
       const heading = document.createElement("h3");
-      heading.textContent = `${safeText(profile.prenom)} ${safeText(profile.nom)}`;
+      heading.textContent =
+        `${safeText(profile.prenom)} ${safeText(profile.nom)}`;
 
       const phone = document.createElement("p");
-      phone.textContent = "Téléphone : " + safeText(profile.telephone);
+      phone.textContent =
+        "Téléphone : " + safeText(profile.telephone);
 
       const state = document.createElement("p");
-      state.textContent = "Partage : " + (online ? "Actif" : "Arrêté / hors ligne");
+      state.textContent =
+        "Partage : " + (online ? "Actif" : "Arrêté / hors ligne");
 
       card.append(heading, phone, state);
+
+      // Bouton de suppression
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "delete-btn";
+      deleteButton.textContent = "🗑️ Supprimer l'appareil";
+
+      const deviceName =
+        `${safeText(profile.prenom)} ${safeText(profile.nom)}`;
+
+      deleteButton.addEventListener("click", () => {
+        deleteDevice(uid, deviceName, deleteButton);
+      });
+
+      card.append(deleteButton);
 
       const validCoordinates =
         typeof location.latitude === "number" &&
@@ -156,20 +297,32 @@
         Math.abs(location.longitude) <= 180;
 
       if (validCoordinates) {
-        const point = [location.latitude, location.longitude];
+        const point = [
+          location.latitude,
+          location.longitude
+        ];
+
         const marker = L.marker(point).addTo(map);
+
         marker.bindPopup(
           `${safeText(profile.prenom)} ${safeText(profile.nom)}`
         );
+
         markers[uid] = marker;
         bounds.push(point);
 
         const coordinates = document.createElement("p");
         coordinates.textContent =
-          `Latitude : ${location.latitude.toFixed(5)}, Longitude : ${location.longitude.toFixed(5)}`;
+          `Latitude : ${location.latitude.toFixed(5)}, ` +
+          `Longitude : ${location.longitude.toFixed(5)}`;
 
         const mapLink = document.createElement("a");
-        mapLink.href = `https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=16/${location.latitude}/${location.longitude}`;
+
+        mapLink.href =
+          `https://www.openstreetmap.org/?mlat=${location.latitude}` +
+          `&mlon=${location.longitude}` +
+          `#map=16/${location.latitude}/${location.longitude}`;
+
         mapLink.target = "_blank";
         mapLink.rel = "noopener noreferrer";
         mapLink.textContent = "Ouvrir la position sur la carte";
@@ -177,7 +330,9 @@
         card.append(coordinates, mapLink);
       } else {
         const noLocation = document.createElement("p");
-        noLocation.textContent = "Aucune position GPS valide disponible.";
+        noLocation.textContent =
+          "Aucune position GPS valide disponible.";
+
         card.append(noLocation);
       }
 
@@ -186,14 +341,22 @@
     }
 
     statusBox.textContent = `Nombre d'appareils : ${count}`;
-    if (bounds.length === 1) map.setView(bounds[0], 15);
-    else if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+
+    if (bounds.length === 1) {
+      map.setView(bounds[0], 15);
+    } else if (bounds.length > 1) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    }
   }
 
   function stopDashboard() {
-    if (stopListening) stopListening();
+    if (stopListening) {
+      stopListening();
+    }
+
     stopListening = null;
     devicesBox.replaceChildren();
+
     if (map) {
       clearMarkers();
       map.remove();
@@ -202,52 +365,69 @@
     }
   }
 
-  document.getElementById("loginForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    statusBox.textContent = "Connexion...";
-    try {
-      await signInWithEmailAndPassword(
-        auth,
-        document.getElementById("email").value.trim(),
-        document.getElementById("password").value
-      );
-    } catch (error) {
-      statusBox.textContent = "Connexion impossible : " + error.message;
+  document.getElementById("loginForm").addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      statusBox.textContent = "Connexion...";
+
+      try {
+        await signInWithEmailAndPassword(
+          auth,
+          document.getElementById("email").value.trim(),
+          document.getElementById("password").value
+        );
+      } catch (error) {
+        statusBox.textContent =
+          "Connexion impossible : " + error.message;
+      }
     }
-  });
+  );
 
   onAuthStateChanged(auth, (user) => {
     stopDashboard();
+
     if (user && user.uid === ADMIN_UID) {
       loginPanel.hidden = true;
       dashboard.hidden = false;
+
       showMap();
+
       statusBox.textContent = "Chargement des appareils...";
+
       stopListening = onValue(
         ref(db, "clients"),
         renderClients,
         (error) => {
-          statusBox.textContent = "Erreur Firebase : " + error.message;
+          statusBox.textContent =
+            "Erreur Firebase : " + error.message;
         }
       );
     } else {
       dashboard.hidden = true;
       loginPanel.hidden = false;
+
       if (user) {
-        statusBox.textContent = "Ce compte n'a pas l'autorisation Admin.";
+        statusBox.textContent =
+          "Ce compte n'a pas l'autorisation Admin.";
+
         signOut(auth);
       }
     }
   });
 
   document.getElementById("refreshBtn").addEventListener("click", () => {
-    statusBox.textContent = "Les données sont mises à jour automatiquement.";
+    statusBox.textContent =
+      "Les données sont mises à jour automatiquement.";
   });
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    stopDashboard();
-    await signOut(auth);
-  });
+  document.getElementById("logoutBtn").addEventListener(
+    "click",
+    async () => {
+      stopDashboard();
+      await signOut(auth);
+    }
+  );
 </script>
 </body>
 </html>
