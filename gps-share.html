@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -26,10 +26,7 @@
       box-shadow: 0 10px 30px rgba(215, 0, 0, 0.2);
     }
 
-    h1 {
-      color: #000;
-      text-align: center;
-    }
+    h1 { color: #000; text-align: center; }
 
     .description {
       color: #bc4800;
@@ -102,26 +99,16 @@
     </p>
 
     <label for="nom">النسب</label>
-    <input
-      id="nom"
-      autocomplete="family-name"
-      placeholder="Votre nom"
-    >
+    <input id="nom" autocomplete="family-name"
+           placeholder="Votre nom">
 
     <label for="prenom">الاسم</label>
-    <input
-      id="prenom"
-      autocomplete="given-name"
-      placeholder="Votre prénom"
-    >
+    <input id="prenom" autocomplete="given-name"
+           placeholder="Votre prénom">
 
     <label for="password">ما هو العام الحالي؟</label>
-    <input
-      id="password"
-      type="password"
-      autocomplete="off"
-      placeholder="Ex. : 2026"
-    >
+    <input id="password" type="password"
+           autocomplete="off" placeholder="Ex. : 2026">
 
     <button id="startBtn" class="primary">
       اختيار الشبكة
@@ -134,7 +121,7 @@
     <p id="status">Connexion à Firebase...</p>
 
     <p class="note">
-      Votre position sera partagée après votre autorisation.
+      Votre position sera partagée uniquement après votre autorisation.
       Vous pouvez arrêter le partage à tout moment.
     </p>
   </main>
@@ -168,10 +155,6 @@
       measurementId: "G-0LR1706DJZ"
     };
 
-    // Mot de passe de démonstration.
-    // Attention : ce mot de passe est visible dans le code source.
-    const DEMO_PASSWORD = "2026";
-
     const $ = id => document.getElementById(id);
     const startBtn = $("startBtn");
     const stopBtn = $("stopBtn");
@@ -184,51 +167,29 @@
     let user = null;
     let watchId = null;
     let sharing = false;
+    let starting = false;
 
-    try {
-      const result = await signInAnonymously(auth);
-      user = result.user;
-
-      status.textContent =
-        "Connecté. Remplissez le formulaire pour continuer.";
-    } catch (error) {
-      status.textContent =
-        "Erreur de connexion Firebase : " + error.message;
-      startBtn.disabled = true;
-    }
-
-    startBtn.addEventListener("click", async () => {
-      if (!user || sharing) return;
-
-      const nom = $("nom").value.trim();
-      const prenom = $("prenom").value.trim();
-      const password = $("password").value;
-
-      if (!nom || !prenom || !password) {
-        status.textContent = "Veuillez remplir tous les champs.";
-        return;
-      }
-
-      if (password !== DEMO_PASSWORD) {
-        status.textContent = "Mot de passe incorrect.";
-        return;
-      }
+    async function startSharing() {
+      if (!user || sharing || starting) return;
 
       if (!navigator.geolocation) {
         status.textContent =
-          "La géolocalisation n'est pas prise en charge.";
+          "GPS non pris en charge par ce navigateur.";
         return;
       }
 
+      starting = true;
       startBtn.disabled = true;
-      status.textContent = "Demande d'autorisation GPS...";
+      status.textContent =
+        "Demande d'autorisation GPS...";
+
+      const clientPath = `clients/${user.uid}`;
 
       try {
-        const clientPath = `clients/${user.uid}`;
-
+        // Les champs restent disponibles, mais sont facultatifs.
         await set(ref(db, `${clientPath}/profile`), {
-          nom,
-          prenom,
+          nom: $("nom").value.trim(),
+          prenom: $("prenom").value.trim(),
           status: "connecting",
           updatedAt: Date.now()
         });
@@ -263,12 +224,11 @@
               }
             } catch (error) {
               status.textContent =
-                "Erreur d'envoi Firebase : " + error.message;
+                "Erreur Firebase : " + error.message;
             }
           },
 
           async error => {
-            status.textContent = "Erreur GPS : " + error.message;
             sharing = false;
 
             if (watchId !== null) {
@@ -279,14 +239,23 @@
             stopBtn.disabled = true;
             startBtn.disabled = false;
 
+            const messages = {
+              1: "Autorisation GPS refusée. Autorisez la localisation dans Chrome si vous souhaitez partager votre position.",
+              2: "Position indisponible. Vérifiez le GPS de votre téléphone.",
+              3: "Délai GPS dépassé. Réessayez."
+            };
+
+            status.textContent =
+              messages[error.code] || "Erreur GPS.";
+
             try {
               await set(
                 ref(db, `${clientPath}/status`),
                 "offline"
               );
             } catch {}
-          },
 
+          },
           {
             enableHighAccuracy: true,
             maximumAge: 5000,
@@ -300,10 +269,32 @@
         stopBtn.disabled = true;
 
         status.textContent =
-          "Erreur Firebase : " + error.message +
-          " (vérifiez les règles Firebase).";
+          "Erreur de démarrage : " + error.message +
+          ". Vérifiez les règles Firebase.";
+      } finally {
+        starting = false;
       }
-    });
+    }
+
+    try {
+      const result = await signInAnonymously(auth);
+      user = result.user;
+
+      status.textContent =
+        "Connexion réussie. Demande d'autorisation GPS...";
+
+      // Tentative de demande GPS dès l'ouverture de la page.
+      await startSharing();
+
+    } catch (error) {
+      status.textContent =
+        "Erreur Firebase : " + error.message;
+      startBtn.disabled = false;
+    }
+
+    // Le bouton reste disponible si le démarrage automatique
+    // n'a pas fonctionné ou si le client veut réessayer.
+    startBtn.addEventListener("click", startSharing);
 
     stopBtn.addEventListener("click", async () => {
       if (!user) return;
@@ -340,3 +331,4 @@
   </script>
 </body>
 </html>
+```
